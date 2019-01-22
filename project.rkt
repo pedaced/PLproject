@@ -10,7 +10,21 @@
 
 (struct var  (string) #:transparent)  ;; a variable, e.g., (var "foo")
 (struct num  (int)    #:transparent)  ;; a constant number, e.g., (num 17)
+(struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
 (struct plus  (e1 e2)  #:transparent)  ;; add two expressions
+(struct bool (b)      #:transparent)  ;; a boolean value, e.g., (bool #t)
+(struct add  (e1 e2)  #:transparent)  ;; add two expressions
+(struct mult (e1 e2)  #:transparent)  ;; multiply two expressions
+(struct neg  (e1)     #:transparent)  ;; negate the expression
+(struct islthan (e1 e2) #:transparent) ;; is less than
+(struct ifzero (e1 e2 e3) #:transparent) ;; tests e1
+(struct ifgthan (e1 e2 e3 e4) #:transparent) ;; tests if e1 is greater than e2
+(struct fun  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
+(struct call (funexp actual)       #:transparent) ;; function call
+(struct mlet (s e1 e2)  #:transparent) ;; a local bounder which the value of e1 is bound to s in the expression e2
+(struct apair (e1 e2)   #:transparent) ;; pair constructor
+(struct first (e1)      #:transparent) ;; the first element of the pair e1
+(struct second (e2)     #:transparent) ;; the second element of the pair e2
 
 
 (struct lam  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
@@ -26,9 +40,9 @@
 ;; Problem 1
 
 (define (racketlist->numexlist xs) (cond [(null? xs)(munit)]
-                                         [(true)(apair(car(xs))(cdr(racketlist->numexlist xs)))]))
+                                         [(true)(apair(car xs)(racketlist->numexlist (cdr xs)))]))
 (define (numexlist->racketlist xs) (cond [(munit? xs)(null)]
-                                         [(true)(cons (car(xs))(numexlist->racketlist(cdr(xs))]))
+                                         [(true)(cons (car xs)(numexlist->racketlist(cdr xs)))]))
 
 ;; Problem 2
 
@@ -36,9 +50,8 @@
 ;; Complete this function
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
-  		"CHANGE" 
-		)
- )
+  	[(eq? str (car(car env))) (cdr(car env))]
+        [true (envlookup cdr(env) str)]))
 
 ;; Complete more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
