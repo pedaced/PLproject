@@ -25,8 +25,10 @@
 
 ;; Problem 1
 
-(define (racketlist->numexlist xs) "CHANGE")
-(define (numexlist->racketlist xs) "CHANGE")
+(define (racketlist->numexlist xs) (cond [(null? xs)(munit)]
+                                         [(true)(apair(car(xs))(cdr(racketlist->numexlist xs)))]))
+(define (numexlist->racketlist xs) (cond [(munit? xs)(null)]
+                                         [(true)(cons (car(xs))(numexlist->racketlist(cdr(xs))]))
 
 ;; Problem 2
 
