@@ -9,9 +9,7 @@
 ;; CHANGE add the missing ones
 
 (struct var  (string) #:transparent)  ;; a variable, e.g., (var "foo")
-(struct num  (int)    #:transparent)  ;; a constant number, e.g., (num 17)
 (struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
-(struct plus  (e1 e2)  #:transparent)  ;; add two expressions
 (struct bool (b)      #:transparent)  ;; a boolean value, e.g., (bool #t)
 (struct add  (e1 e2)  #:transparent)  ;; add two expressions
 (struct mult (e1 e2)  #:transparent)  ;; multiply two expressions
@@ -51,7 +49,7 @@
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
   	[(eq? str (car(car env))) (cdr(car env))]
-        [true (envlookup cdr(env) str)]))
+        [true (envlookup (cdr env) str)]))
 
 ;; Complete more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
@@ -59,15 +57,90 @@
 (define (eval-under-env e env)
   (cond [(var? e) 
          (envlookup env (var-string e))]
-        [(plus? e) 
-         (let ([v1 (eval-under-env (plus-e1 e) env)]
-               [v2 (eval-under-env (plus-e2 e) env)])
-           (if (and (num? v1)
-                    (num? v2))
-               (num (+ (num-int v1) 
-                       (num-int v2)))
+        [(add? e) 
+         (let ([v1 (eval-under-env (add-e1 e) env)]
+               [v2 (eval-under-env (add-e2 e) env)])
+           (if (and (int v1)
+                    (int v2))
+               (int (+ (int-num v1) 
+                       (int-num v2)))
                (error "NUMEX addition applied to non-number")))]
-        ;; CHANGE add more cases here
+
+        
+        [(int? e)
+         (if (integer? e) e (error "not integer"))]
+
+        [(mult? e) 
+         (let ([v1 (eval-under-env (mult-e1 e) env)]
+               [v2 (eval-under-env (mult-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (int (* (int-num v1) 
+                       (int-num v2)))
+               (error "NUMEX multipation applied to non-number")))]
+
+        [(neg? e)
+         (let ([v1 (eval-under-env (neg-e1 e) env)])
+           (if (int? v1)
+               (int (- (int-num v1)))
+               (error "NUMEX negation applied to non-number")))]
+
+        [(islthan? e)
+         (let ([v1 (eval-under-env (islthan-e1 e) env)]
+               [v2 (eval-under-env (islthan-e2 e) env)])
+           (if (and (int? v1)(int? v2))
+               (if (< v1 v2)(int 1)(int 0))
+               (error "wrong format!")))]
+
+        [(ifzero? e)
+         (let ([v1 (eval-under-env (ifzero-e1 e) env)])
+           (if (int? v1)
+               (if (zero? v1)
+                   (eval-under-env (ifzero-e2 e) env)
+                   (eval-under-env (ifzero-e3 e) env))
+               (error "wrong format")))]
+
+        [(ifgthan? e)
+         (let ([v1 (eval-under-env (ifgthan-e1 e) env)]
+               [v2 (eval-under-env (ifgthan-e2 e) env)])
+           (if (and (int? v1)(int? v2))
+               (if (> v1 v2)
+                   (eval-under-env (ifgthan-e3 e) env)
+                   (eval-under-env (ifgthan-e4 e) env))
+               (error "wrong format")))]
+
+        [(apair? e)
+         (let([v1 (eval-under-env (apair-e1 e) env)]
+              [v2 (eval-under-env (apair-e2 e) env)])
+           (apair v1 v2))]
+
+        [(first? e)
+         (let([v1 (eval-under-env (first-e1 e) env)])
+           (if (apair? v1)
+               (eval-under-env (apair-e1 e) env)
+               (error "not a pair")))]
+         
+        [(second? e)
+         (let([v1 (eval-under-env (second-e2 e) env)])
+           (if (apair? v1)
+               (eval-under-env (apair-e2 e) env)
+               (error "not a pair")))]
+              
+         
+        [(munit? e)
+           (munit)]
+
+        [(ismunit? e)
+         (let ([v1 (eval-under-env (ismunit-e e) env)])
+           (if (munit? v1)(int 1)(int 0)))]
+
+        [(closure? e) e]
+
+        [(fun? e)
+             (closure env e)]
+
+        [(call? e)]
+        
         [#t (error (format "bad NUMEX expression: ~v" e))]))
 
 ;; Do NOT change
@@ -86,9 +159,9 @@
 
 (define numex-filter "CHANGE")
 
-(define numex-all-gt
-  (with "filter" numex-filter
-        "CHANGE (notice filter is now in NUMEX scope)"))
+;;(define numex-all-gt
+;;  (with "filter" numex-filter
+;;        "CHANGE (notice filter is now in NUMEX scope)"))
 
 ;; Challenge Problem
 
